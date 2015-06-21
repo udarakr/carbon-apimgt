@@ -1,14 +1,17 @@
 $(function () {
 
-    var swaggerUrl = caramel.context + "/asts/api/apis/swagger?provider=" + store.publisher.api.provider + "&name=" + store.publisher.api.name + "&version=" + store.publisher.api.version;
+    //Initializing the designer
+    var designer = new APIMangerAPI.APIDesigner();
+    designer.set_partials('implement');
+
+    var swaggerUrl = caramel.context + "/asts/api/apis/swagger?action=swaggerDoc&provider=" + store.publisher.api.provider + "&name=" + store.publisher.api.name + "&version=" + store.publisher.api.version;
+
     $(document).ready(function () {
         $.ajaxSetup({
                         contentType: "application/x-www-form-urlencoded; charset=utf-8"
                     });
 
-
         $.get(swaggerUrl, function (data) {
-            var designer = new APIMangerAPI.APIDesigner();
             designer.load_api_document(data.data);
             designer.set_default_management_values();
             designer.render_resources();

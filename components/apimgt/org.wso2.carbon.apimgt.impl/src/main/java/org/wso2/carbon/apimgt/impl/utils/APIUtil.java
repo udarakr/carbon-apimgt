@@ -19,6 +19,7 @@
 package org.wso2.carbon.apimgt.impl.utils;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FilenameFilter;
@@ -91,8 +92,8 @@ import org.apache.woden.WSDLException;
 import org.apache.woden.WSDLFactory;
 import org.apache.woden.WSDLReader;
 import org.jaggeryjs.scriptengine.exceptions.ScriptException;
-import org.json.simple.JSONObject;
 import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.w3c.dom.Document;
@@ -112,6 +113,8 @@ import org.wso2.carbon.apimgt.api.model.APISubscription;
 import org.wso2.carbon.apimgt.api.model.Application;
 import org.wso2.carbon.apimgt.api.model.Documentation;
 import org.wso2.carbon.apimgt.api.model.DocumentationType;
+import org.wso2.carbon.apimgt.api.model.FileData;
+import org.wso2.carbon.apimgt.api.model.Icon;
 import org.wso2.carbon.apimgt.api.model.KeyManager;
 import org.wso2.carbon.apimgt.api.model.KeyManagerConfiguration;
 import org.wso2.carbon.apimgt.api.model.Provider;
@@ -251,8 +254,13 @@ public final class APIUtil {
             String providerName = artifact.getAttribute(APIConstants.API_OVERVIEW_PROVIDER);
             String apiName = artifact.getAttribute(APIConstants.API_OVERVIEW_NAME);
             String apiVersion = artifact.getAttribute(APIConstants.API_OVERVIEW_VERSION);
-            APIIdentifier apiId = new APIIdentifier(providerName, apiName, apiVersion);
-            api = new API(apiId);
+            APIIdentifier apiIdentifier = new APIIdentifier(providerName, apiName, apiVersion);
+            int apiId = ApiMgtDAO.getAPIID(apiIdentifier, null);
+
+            if(apiId == -1){
+                return null;
+            }
+            api = new API(apiIdentifier);
             // set rating
             String artifactPath = GovernanceUtils.getArtifactPath(registry, artifact.getId());
             // BigDecimal bigDecimal = new BigDecimal(getAverageRating(apiId));
@@ -425,8 +433,14 @@ public final class APIUtil {
             String providerName = artifact.getAttribute(APIConstants.API_OVERVIEW_PROVIDER);
             String apiName = artifact.getAttribute(APIConstants.API_OVERVIEW_NAME);
             String apiVersion = artifact.getAttribute(APIConstants.API_OVERVIEW_VERSION);
-            APIIdentifier apiId = new APIIdentifier(providerName, apiName, apiVersion);
-            api = new API(apiId);
+            APIIdentifier apiIdentifier = new APIIdentifier(providerName, apiName, apiVersion);
+            int apiId = ApiMgtDAO.getAPIID(apiIdentifier, null);
+
+            if (apiId == -1) {
+                return null;
+            }
+
+            api = new API(apiIdentifier);
             // set rating
             String artifactPath = GovernanceUtils.getArtifactPath(registry, artifact.getId());
             // BigDecimal bigDecimal = new BigDecimal(getAverageRating(apiId));
@@ -468,7 +482,7 @@ public final class APIUtil {
                 }
             } catch (NumberFormatException e) {
                 if (log.isWarnEnabled()) {
-                    log.warn("Error while retrieving cache timeout from the registry for " + apiId);
+                    log.warn("Error while retrieving cache timeout from the registry for " + apiIdentifier);
                 }
                 // ignore the exception and use default cache timeout value
             }
@@ -608,8 +622,13 @@ public final class APIUtil {
             String providerName = artifact.getAttribute(APIConstants.API_OVERVIEW_PROVIDER);
             String apiName = artifact.getAttribute(APIConstants.API_OVERVIEW_NAME);
             String apiVersion = artifact.getAttribute(APIConstants.API_OVERVIEW_VERSION);
-            api = new API(new APIIdentifier(providerName, apiName, apiVersion));
-            api.setRating(getAverageRating(api.getId()));
+            APIIdentifier apiIdentifier = new APIIdentifier(providerName, apiName, apiVersion);
+            api = new API(apiIdentifier);
+            int apiId = ApiMgtDAO.getAPIID(apiIdentifier, null);
+            if (apiId == -1) {
+                return null;
+            }
+            api.setRating(getAverageRating(apiId));
             api.setThumbnailUrl(artifact.getAttribute(APIConstants.API_OVERVIEW_THUMBNAIL_URL));
             api.setStatus(getApiStatus(artifact.getAttribute(APIConstants.API_OVERVIEW_STATUS)));
             api.setContext(artifact.getAttribute(APIConstants.API_OVERVIEW_CONTEXT));
@@ -2968,6 +2987,10 @@ public final class APIUtil {
         return ApiMgtDAO.getAverageRating(apiId);
     }
 
+    public static float getAverageRating(int apiId) throws APIManagementException {
+        return ApiMgtDAO.getAverageRating(apiId);
+    }
+
     public static List<Tenant> getAllTenantsWithSuperTenant() throws UserStoreException {
         Tenant[] tenants = ServiceReferenceHolder.getInstance().getRealmService().getTenantManager().getAllTenants();
         ArrayList<Tenant> tenantArrayList=new ArrayList<Tenant>();
@@ -4197,6 +4220,20 @@ public final class APIUtil {
         PermissionUpdateUtil.updatePermissionTree(tenantId);
     }
 
+	/**
+     * Check whether given application name is available under current subscriber or group
+     *
+     * @param subscriber      subscriber name
+     * @param applicationName application name
+     * @param groupId         group of the subscriber
+     * @return true if application is available for the subscriber
+     * @throws APIManagementException if failed to get applications for given subscriber
+     */
+    public static boolean isApplicationExist(String subscriber, String applicationName, String groupId)
+            throws APIManagementException {
+        return ApiMgtDAO.isApplicationExist(applicationName, subscriber, groupId);
+    }
+
     // Start of APIProvider related methods.
 
     /**
@@ -4780,7 +4817,7 @@ public final class APIUtil {
 		}
 	}
 
-	protected static  boolean isUsageDataSourceSpecified() {
+	public static  boolean isUsageDataSourceSpecified() {
 		APIManagerConfiguration configuration =
 				ServiceReferenceHolder.getInstance().getAPIManagerConfigurationService().getAPIManagerConfiguration();
 
@@ -5139,10 +5176,52 @@ public final class APIUtil {
 		return registeredResource;
 	}
 	
-	public static String convertToString(Object obj) {
-		Gson gson = new Gson();
-		String json = gson.toJson(obj);
-		return json;
+    public static String convertToString(Object obj) {
+	Gson gson = new Gson();
+	String json = gson.toJson(obj);
+	return json;
+    }
+	
+    public static Documentation populateDocument(String docType, String sourceType, String sourceURL, String summary,
+	    String docName, String otherTypeName, String visibility) {
+	Documentation doc = new Documentation(getDocType(docType), docName);
+
+	doc.setSummary(summary);
+	doc.setSourceUrl(sourceURL);
+
+	if (doc.getType() == DocumentationType.OTHER) {
+	    doc.setOtherTypeName(otherTypeName);
 	}
 
+	if (sourceType.equalsIgnoreCase(Documentation.DocumentSourceType.URL.toString())) {
+	    doc.setSourceType(Documentation.DocumentSourceType.URL);
+	} else if (sourceType.equalsIgnoreCase(Documentation.DocumentSourceType.FILE.toString())) {
+	    doc.setSourceType(Documentation.DocumentSourceType.FILE);
+	} else {
+	    doc.setSourceType(Documentation.DocumentSourceType.INLINE);
+	}
+
+	if (visibility == null) {
+	    visibility = APIConstants.DOC_API_BASED_VISIBILITY;
+	}
+	if (visibility.equalsIgnoreCase(Documentation.DocumentVisibility.API_LEVEL.toString())) {
+	    doc.setVisibility(Documentation.DocumentVisibility.API_LEVEL);
+	} else if (visibility.equalsIgnoreCase(Documentation.DocumentVisibility.PRIVATE.toString())) {
+	    doc.setVisibility(Documentation.DocumentVisibility.PRIVATE);
+	} else {
+	    doc.setVisibility(Documentation.DocumentVisibility.OWNER_ONLY);
+	}
+
+	return doc;
+    }
+	
+    public static FileData populateFileData(byte[] content, String fileName, String contentType, String filePath) {
+	FileData file = new FileData(new ByteArrayInputStream(content), fileName, contentType, filePath);
+	return file;
+    }
+
+	public static String getLifeCycleTransitionAction(String currentStatus, String nextStatu) {
+		//TODO Implement
+		return "Publish";
+	}
 }

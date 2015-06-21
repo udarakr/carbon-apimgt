@@ -1,33 +1,29 @@
 $(document).ready(function(){
     var designer = new APIMangerAPI.APIDesigner();
-    var swaggerUrl = caramel.context + "/asts/api/apis/swagger?provider="+store.publisher.api.provider+"&name="+store.publisher.api.name+ "&version="+store.publisher.api.version;
+    designer.set_partials('design');
+    var swaggerUrl = caramel.context + "/asts/api/apis/swagger?action=swaggerDoc&provider="+store.publisher.api.provider+"&name="+store.publisher.api.name+ "&version="+store.publisher.api.version;
     // $.fn.editable.defaults.mode = 'inline';
-    if(store.publisher.api.name!=""){
+    if(store.publisher.api.name != ""){
      $.get(swaggerUrl , function( data ) {
-            var designer =new  APIMangerAPI.APIDesigner();
             designer.load_api_document(data.data);
             designer.render_resources();
             $("#swaggerUpload").modal('hide');
      });
-     }else{
-            $("body").on("api_saved" , function(e){
-            location.href = caramel.context+"/asts/api/design/"+designer.saved_api.id+"?name="+designer.saved_api.name+"&version="+designer.saved_api.version+"&provider="+designer.saved_api.provider;                
-            });  
-     }    
-    $("#clearThumb").on("click", function () {
-        $('#apiThumb-container').html('<input type="file" class="input-xlarge" name="apiThumb" />');
-    });
-
-    $('#import_swagger').click(function(){
-        var data = {
-            "swagger_url" : $("#swagger_import_url").val() // "http://petstore.swagger.wordnik.com/api/api-docs"
-        }
-        $.get( jagg.site.context + "/site/blocks/item-design/ajax/import.jag", data , function( data ) {
-            var designer = APIDesigner();
-            designer.load_api_document(data);
+     } else if(store.publisher.swaggerAvailable) {
+        var sessionSwaggerUrl = caramel.context + "/asts/api/apis/swagger?action=sessionSwaggerDoc";
+        $.get(sessionSwaggerUrl , function( data ) {
+            designer.load_api_document(data.data);
+            designer.render_resources();
             $("#swaggerUpload").modal('hide');
         });
-    });
+    }
+
+    //If API is not yet created api save trigger is registered in here
+    if(store.publisher.api.name == "") {
+        $("body").on("api_saved" , function(e){
+            location.href = caramel.context+"/asts/api/design/"+designer.saved_api.id+"?name="+designer.saved_api.name+"&version="+designer.saved_api.version+"&provider="+designer.saved_api.provider;
+        });
+    }
 
     var v = $("#form-asset-create").validate({
                                                  contentType : "application/x-www-form-urlencoded;charset=utf-8",

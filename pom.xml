@@ -745,7 +745,6 @@
 	   <carbon.commons.version>4.4.3</carbon.commons.version>
 
          
-        <carbon.registry.imp.pkg.version>[1.0.1, 1.1.0)</carbon.registry.imp.pkg.version>
         <commons.logging.imp.pkg.version>[1.2.0, 1.3.0)</commons.logging.imp.pkg.version>
 
 
@@ -756,10 +755,10 @@
         <carbon.apimgt.handlers.stub.package.import.version.range>[4.4.0, 4.5.0)</carbon.apimgt.handlers.stub.package.import.version.range>
 
 	<!-- Carbon Governance -->
-        <carbon.governance.version>4.4.2-SNAPSHOT</carbon.governance.version>
+        <carbon.governance.version>4.5.1-SNAPSHOT</carbon.governance.version>
 
         <!-- Carbon Registry -->
-        <carbon.registry.version>4.4.2-SNAPSHOT</carbon.registry.version>
+        <carbon.registry.version>4.4.3-SNAPSHOT</carbon.registry.version>
         <carbon.registry.imp.pkg.version>[1.0.1, 2.0.0)</carbon.registry.imp.pkg.version>
 
 	
@@ -804,8 +803,8 @@
         <!-- Misc Versions -->
         <orbit.version.h2.engine>1.2.140.wso2v3</orbit.version.h2.engine>
         <hostobjects.version>1.0.0</hostobjects.version>
-	    <carbon.identity.version>4.5.0</carbon.identity.version>
-        <identity.version>4.5.0</identity.version>
+	    <carbon.identity.version>4.5.1</carbon.identity.version>
+        <identity.version>4.5.1</identity.version>
         <wso2carbon.version.identity>${project.version}</wso2carbon.version.identity>
         <axis2.wso2.version.identity>${axis2.wso2.version}</axis2.wso2.version.identity>
         <axiom.wso2.version.identity>${axiom.wso2.version}</axiom.wso2.version.identity>

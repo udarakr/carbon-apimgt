@@ -18,12 +18,13 @@
  */
 var resources = function(page,meta){
     return {
-        js:['create_api_design.js','jquery-ace.min.js','typeahead.bundle.js', 'bootstrap.js',
-            'jquery.form.js','jquery.cookie.js','bootstrap-tagsinput.min.js','jquery.validate.min.js','js-yaml.min.js','bootstrap-dialog.min.js',
-            'create_asset.js','bootstrap-editable.js' ,'bootstrap-multiselect.js', 'custom-validation.js',
-            'jsonpath-0.8.0.js','handlebars.js','jquery.noty.packaged.min.js' ,'typeaheadjs.js'],
-        code:['manage_api_meta.hbs'],
-        css:['bootstrap/bootstrap-editable.css',
-             'bootstrap/bootstrap-tagsinput.css','api_designer.css','bootstrap-dialog.min.css', 'bootstrap-multiselect.css']
+        js:['jquery/jquery-ace.min.js','typeahead.bundle.js','jquery/jquery.buttonLoader.js',
+            'jquery/jquery.form.js','jquery/jquery.cookie.js','bootstrap/bootstrap-tagsinput.min.js','jquery/jquery.validate.min.js',
+            'js-yaml.min.js','bootstrap/bootstrap-dialog.min.js','api_designer.js','create_asset.js','bootstrap/bootstrap-editable.js' ,
+            'bootstrap/bootstrap-multiselect.js', 'custom-validation.js','jsonpath-0.8.0.js','handlebars.js',
+            'jquery/jquery.noty.packaged.min.js' ,'typeaheadjs.js'],
+        code:['api_meta.hbs', 'design_api_meta.hbs'],
+        css:['bootstrap/bootstrap-editable.css','buttonLoader.css',
+             'bootstrap/bootstrap-tagsinput.css','api_designer.css','bootstrap/bootstrap-dialog.min.css', 'bootstrap/bootstrap-multiselect.css']
     }
 };

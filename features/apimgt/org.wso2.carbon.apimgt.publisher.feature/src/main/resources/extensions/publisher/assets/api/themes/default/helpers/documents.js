@@ -18,6 +18,9 @@
  */
 var resources = function(page,meta){
 	return {
-		js:['libs/jquery.form.min.js','add_document.js']
+		js:['libs/jquery.form.min.js','document.js','bootstrap-dialog.min.js','bootstrap/bootstrap-editable.js',
+            'bootstrap/bootstrap-multiselect.js'],
+		css:['bootstrap/bootstrap-editable.css','bootstrap/bootstrap-dialog.min.css',
+             'bootstrap/bootstrap/bootstrap-tagsinput.css', 'bootstrap/bootstrap-multiselect.css']
 	};
 };

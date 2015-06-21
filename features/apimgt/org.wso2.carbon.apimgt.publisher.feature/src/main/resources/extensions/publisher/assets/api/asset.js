@@ -17,7 +17,7 @@
  *
  */
 asset.manager = function(ctx) {
-    var apiPublisher =  require('apipublisher').apipublisher;
+    var apiPublisher =  require('apipublisher').provider;
     var LOGGED_IN_USER = 'LOGGED_IN_USER';
     var log = new Log('default-asset');
 
@@ -72,7 +72,7 @@ asset.manager = function(ctx) {
             var api = {};
             var rxtModule = require('rxt');
             var assetMod = rxtModule.asset;
-            if(options.attributes.action=="design"){
+            if(options.attributes.action=="design") {
                 api.apiName = options.attributes.overview_name;
                 api.name = options.attributes.overview_name;
                 api.version = options.attributes.overview_version;
@@ -85,34 +85,31 @@ asset.manager = function(ctx) {
 
                 //TODO now we no need to save Icon through API manager as asset API does it for us
                 //Need to properly cope with that changed
-                api.thumbnailContent = request.getFile("overview_thumbnail");
-                api.thumbnailUrl = null;
-
-                //validate uploaded image and set API has a image if content is valid
-                if(api.thumbnailContent != null && isValiedImage(api.thumbnailContent)){
-                    api.thumbnailUrl = 'overview_thumbnail';
-                } else if(api.thumbnailContent != null && !isValiedImage(api.thumbnailContent)){
-                    obj = {
-                        error:true,
-                        message:"Please upload a valid image file for the API icon."
-                    };
-                    print(obj);
-                    return;
-                }
-
+                api.thumbnailUrl = options.attributes.overview_thumbnail;
+                //Skipping handling the image upload here
+                /*//validate uploaded image and set API has a image if content is valid
+                 if(api.thumbnail != null && api.thumbnail != "" && isValiedImage(api.thumbnail)){
+                 api.thumbnailUrl = 'overview_thumbnail';
+                 } else if(api.thumbnail != null && api.thumbnail != "" && !isValiedImage(api.thumbnail)){
+                 obj = {
+                 error:true,
+                 message:"Please upload a valid image file for the API icon."
+                 };
+                 throw 'Error while creating the API' + obj;
+                 }*/
                 //If API not exist create
                 var apiProxy = apiPublisher.instance(ctx.username);
                 result = apiProxy.checkIfAPIExists(api.provider, api.name, api.version);
 
-                if(!result.error && !result.exist){
+                if (!result.error && !result.exist) {
                     result = apiProxy.createAPI(api);
-                    if (result!=null && result.error) {
+                    if (result != null && result.error) {
                         throw "Error while creating the API." + result.error;
-                    } else{
-                        options.id=result.uuid;
-                        options.name=api.name;
-                        options.attributes.overview_provider=api.provider;
-                        options.attributes.overview_status='CREATED';
+                    } else {
+                        options.id = result.uuid;
+                        options.name = api.name;
+                        options.attributes.overview_provider = api.provider;
+                        options.attributes.overview_status = 'CREATED';
                     }
                 }
                 api.description = options.attributes.overview_description;
@@ -123,8 +120,8 @@ asset.manager = function(ctx) {
                 api.wsdl = options.attributes.wsdl;
                 api.swagger = options.attributes.swagger;
                 result = apiProxy.updateDesignAPI(api);
-                if (result!=null && result.error) {
-                    throw "Error while updating the API.";
+                if (result != null && result.error) {
+                    throw "Error while updating the API." + result.error;
                 }
             }
         },
@@ -160,20 +157,20 @@ asset.manager = function(ctx) {
 
                 //TODO now we no need to save Icon through API manager as asset API does it for us
                 //Need to properly cope with that changed
-                api.thumbnailContent = request.getFile("overview_thumbnail");
-                api.thumbnailUrl = null;
-
-                //validate uploaded image and set API has a image if content is valid
-                if(api.thumbnailContent != null && isValiedImage(api.thumbnailContent)){
-                    api.thumbnailUrl = 'overview_thumbnail';
-                } else if(api.thumbnailContent != null && !isValiedImage(api.thumbnailContent)){
-                    obj = {
-                        error:true,
-                        message:"Please upload a valid image file for the API icon."
-                    };
-                    print(obj);
-                    return;
-                }
+                api.thumbnailUrl = options.attributes.overview_thumbnail;
+                //Skip for now as ES side handle the image uploading functionality
+                /*api.thumbnailUrl = null;
+                 //validate uploaded image and set API has a image if content is valid
+                 if(api.thumbnail != null && api.thumbnail != "" && isValiedImage(api.thumbnail)){
+                 api.thumbnailUrl = 'overview_thumbnail';
+                 } else if(api.thumbnail != null && api.thumbnail != "" && !isValiedImage(api.thumbnail)){
+                 obj = {
+                 error:true,
+                 message:"Please upload a valid image file for the API icon."
+                 };
+                 print(obj);
+                 return;
+                 }*/
                 var apiProxy = apiPublisher.instance(ctx.username);
                 api.description = options.attributes.overview_description;
                 api.tags = options.attributes.overview_tags;
@@ -258,14 +255,19 @@ asset.manager = function(ctx) {
                 }else{
                     apiData.transports=options.attributes.transport_https;
                 }
+
                 if(options.attributes.inSequence == 'none') {
                     options.attributes.inSequence = null;
                 }
+
                 if(options.attributes.outSequence == 'none') {
                     options.attributes.outSequence = null;
-                }if(options.attributes.faultSequence == 'none') {
+                }
+
+                if(options.attributes.faultSequence == 'none') {
                     options.attributes.faultSequence = null;
                 }
+
                 apiData.inSequence = options.attributes.inSequence;
                 apiData.outSequence= options.attributes.outSequence;
                 apiData.responseCache = options.attributes.responseCache;
@@ -316,12 +318,12 @@ asset.server = function (ctx) {
                         permission:'ASSET_CREATE'
                     }, {
                         title: 'Documents',
-                        url: 'documents',
+                        url: 'docs',
                         path: 'documents.jag'
                     }, {
                         title: 'Tier Permissions',
-                        url: 'tier_permissions',
-                        path: 'tier_permissions.jag'
+                        url: 'tier-permissions',
+                        path: 'tier-permissions.jag'
                     }, {
                         title: 'Manage',
                         url: 'manage',
@@ -332,33 +334,35 @@ asset.server = function (ctx) {
                         url: 'api-subscriptions',
                         path: 'api-subscriptions.jag'
                     }, {
+                        title: 'API Usage Details By Version',
+                        url: 'versions',
+                        path: 'versions.jag'
+                    }, {
+                        title: 'API Usage Details By Users',
+                        url: 'users',
+                        path: 'users.jag'
+                    }, {
                         title: 'Start Creating an API',
                         url: 'start',
                         path: 'start.jag',
                         permission:'ASSET_CREATE'
                     }],
             apis: [{
-                       url: 'endpoints',
-                       path: 'endpoints.jag'
-                   }, {
-                       url: 'prototype',
-                       path: 'prototype.jag'
-                   }, {
                        url: 'swagger',
                        path: 'swagger.jag'
                    }, {
                        url: 'lifecycle',
                        path: 'lifecycle.jag'
                    },{
-                       url: 'apimanage',
-                       path: 'apimanage.jag'
+                       url: 'start',
+                       path: 'start.jag'
+                   },{
+                       url: 'tiers',
+                       path: 'tiers.jag'
                    },{
                        url: 'sequences',
                        path: 'sequences.jag'
                    },{
-                       url: 'tiers',
-                       path: 'tiers.jag'
-                   }, {
                        url: 'api-subscriptions',
                        path: 'api-subscriptions.jag'
                    }, {
@@ -367,8 +371,13 @@ asset.server = function (ctx) {
                    },{
                        url: 'validation',
                        path: 'validation.jag'
+                   },{
+                       url: 'usage',
+                       path: 'usage.jag'
+                   },{
+                       url: 'addDoc',
+                       path: 'document_add.jag'
                    }]
-
         }
     }
 };
@@ -440,15 +449,17 @@ asset.renderer = function (ctx) {
         navList.push('All Statistics', 'btn-stats', '/asts/' + type + '/statistics');
         navList.push('Subscriptions', 'btn-subscribe', '/asts/' + type + '/api-subscriptions');
         navList.push('Statistics', 'btn-stats', '/asts/' + type + '/statistics');
-        navList.push('Tier Permissions', 'btn-cog', '/asts/' + type + '/statistics');
-        //navList.push('Configuration', 'icon-dashboard', util.buildUrl('configuration'));
+        navList.push('Tier Permissions', 'btn-cog', '/asts/' + type + '/tier-permissions');
         return navList.list();
     };
 
     var buildDefaultLeftNav = function (page, util) {
         var id = page.assets.id;
         var navList = util.navList();
-        navList.push('Edit', 'btn-edit', util.buildUrl('design') + '/' + id);
+        //Edit option will only be available if asset has created
+        if(id) {
+            navList.push('Edit', 'btn-edit', util.buildUrl('design') + '/' + id);
+        }
         navList.push('Overview', 'btn-overview', util.buildUrl('details') + '/' + id);
         navList.push('Life Cycle', 'btn-lifecycle', util.buildUrl('lifecycle') + '/' + id);
         navList.push('Versions', 'btn-versions', util.buildUrl('versions') + '/' + id);
@@ -524,6 +535,9 @@ asset.renderer = function (ctx) {
                     case 'start':
                         page.leftNav = buildListLeftNav(page, this);
                         break;
+                    case 'tier-permissions':
+                        page.leftNav = buildListLeftNav(page, this);
+                        break;
                     default:
                         page.leftNav = buildDefaultLeftNav(page, this);
                         break;
@@ -531,7 +545,7 @@ asset.renderer = function (ctx) {
                 return page;
             },
 
-              populateTest:function(page){
+              populateDetails:function(page){
                 if(page.meta.pageName !=='details'){
                     return;
                 }
@@ -542,6 +556,7 @@ asset.renderer = function (ctx) {
                }
                var firstOne = tables[0];
                assets.context = firstOne.fields.context.value;
+               assets.provider = firstOne.fields.provider.value;
                assets.wsdl = firstOne.fields.wsdl.value;
                assets.wadl = firstOne.fields.wadl.value;
                assets.tier = firstOne.fields.tier.value;
@@ -558,10 +573,22 @@ asset.renderer = function (ctx) {
                assets.lastUpdatedDate = page.lastUpdatedDate;
                assets.createdDate = page.createdDate;
 
+            },
 
-
-
+            populateDetails:function(page){
+                if(page.meta.pageName !=='docs'){
+                    return;
+                }
+                var assets = page.assets;
+               var tables = page.assets.tables;
+               if(tables.length > 1){
+                    tables.splice(1,1);
+               }
+               var firstOne = tables[0];
+               assets.provider = firstOne.fields.provider.value;
             }
+
+
         }
     };
 };
